@@ -155,4 +155,50 @@ export class AuthService {
 
     return user;
   }
-}
+
+  async registerDoctor(data: RegisterDto): Promise<AuthResponse> {
+  const { username, email, password, fullName, phone, specialization } = data;
+
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      OR: [{ username }, { email }]
+    }
+  });
+
+  if (existingUser) {
+    throw new AppError('Username atau email sudah terdaftar', 400);
+  }
+
+  const hashedPassword = await hashPassword(password);
+
+  const user = await prisma.user.create({
+    data: {
+      username,
+      email,
+      passwordHash: hashedPassword,
+      role: UserRole.DOKTER, // DOKTER instead of PERAWAT
+      fullName,
+      phone,
+      specialization,
+      isActive: true
+    }
+  });
+
+  const token = generateToken({
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    role: user.role
+  });
+
+  return {
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role
+    },
+    token
+  };
+}}

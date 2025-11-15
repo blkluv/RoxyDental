@@ -50,4 +50,12 @@ export class AuthController {
       next(error);
     }
   }
-}
+
+  async registerDoctor(req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    const result = await authService.registerDoctor(req.body);
+    res.status(201).json(successResponse('Registrasi dokter berhasil', result));
+    } catch (error) {
+        next(error);
+    }
+}}

@@ -223,4 +223,27 @@ export class VisitService {
 
     return queue;
   }
-}
+
+  async updateVisitStatus(id: string, status: VisitStatus) {
+  const visit = await prisma.visit.findUnique({
+    where: { id }
+  });
+
+  if (!visit) {
+    throw new AppError('Kunjungan tidak ditemukan', 404);
+  }
+
+  const updatedVisit = await prisma.visit.update({
+    where: { id },
+    data: { status },
+    include: {
+      patient: {
+        select: {
+          fullName: true
+        }
+      }
+    }
+  });
+
+  return updatedVisit;
+}}

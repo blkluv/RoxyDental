@@ -46,4 +46,14 @@ export class VisitController {
       next(error);
     }
   }
+
+  async updateVisitStatus(req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    const { status } = req.body;
+    const visit = await visitService.updateVisitStatus(req.params.id, status);
+    res.json(successResponse('Status kunjungan berhasil diupdate', visit));
+  } catch (error) {
+    next(error);
+  }
+}
 }

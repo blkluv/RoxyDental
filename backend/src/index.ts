@@ -24,8 +24,21 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }));
+
+// PENTING: Body parser harus sebelum routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// DEBUG MIDDLEWARE (Hapus setelah testing)
+app.use((req, res, next) => {
+  console.log('Request:', {
+    method: req.method,
+    url: req.url,
+    body: req.body,
+    contentType: req.headers['content-type']
+  });
+  next();
+});
 
 // Health check
 app.get('/health', (req, res) => {
@@ -48,7 +61,7 @@ app.listen(PORT, () => {
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
-  console.log('Mematikan Server');
+  console.log('Shutting down gracefully...');
   await prisma.$disconnect();
   process.exit(0);
 });

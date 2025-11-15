@@ -1,10 +1,19 @@
 import { z } from 'zod';
 
 export const loginSchema = z.object({
-  username: z.string().min(3, 'Username minimal 3 karakter'),
-  password: z.string().min(6, 'Password minimal 6 karakter'),
+  username: z.string({
+    required_error: "Username harus diisi",
+    invalid_type_error: "Username harus berupa string"
+  }).min(3, 'Username minimal 3 karakter'),
+  
+  password: z.string({
+    required_error: "Password harus diisi",
+    invalid_type_error: "Password harus berupa string"
+  }).min(6, 'Password minimal 6 karakter'),
+  
   role: z.enum(['DOKTER', 'PERAWAT'], {
-    errorMap: () => ({ message: 'Role harus DOKTER atau PERAWAT' })
+    required_error: "Role harus diisi",
+    invalid_type_error: "Role harus DOKTER atau PERAWAT"
   })
 });
 

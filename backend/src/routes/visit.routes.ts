@@ -9,5 +9,6 @@ router.get('/', authMiddleware, visitController.getVisits);
 router.get('/queue', authMiddleware, visitController.getQueue);
 router.get('/:id', authMiddleware, visitController.getVisitById);
 router.post('/', authMiddleware, visitController.createVisit);
+router.patch('/:id/status', authMiddleware, visitController.updateVisitStatus);
 
 export default router;
