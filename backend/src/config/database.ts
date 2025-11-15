@@ -1,6 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../generated/prisma';
 
-// Create a singleton instance of PrismaClient
 const globalForPrisma = global as unknown as {
   prisma: PrismaClient | undefined;
 };
@@ -13,7 +12,6 @@ export const prisma =
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
-// Gracefully shutdown Prisma on app termination
 process.on('SIGINT', async () => {
   await prisma.$disconnect();
   process.exit(0);

@@ -1,7 +1,10 @@
 import express, { Application } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
+import helmet from 'helmet';
+
+// Import database
+import { prisma } from './config/database';
 
 // Import routes
 import routes from './routes';
@@ -15,16 +18,19 @@ dotenv.config();
 // Initialize Express app
 const app: Application = express();
 
-// Initialize Prisma
-export const prisma = new PrismaClient();
-
 // Middleware
+app.use(helmet());
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', message: 'RoxyDental API is running' });
+});
 
 // Routes
 app.use('/api', routes);
@@ -36,5 +42,13 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('Mematikan Server');
+  await prisma.$disconnect();
+  process.exit(0);
 });

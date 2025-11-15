@@ -1,0 +1,158 @@
+import { prisma } from '../config/database';
+import { UserRole } from '../../generated/prisma';
+import { hashPassword, comparePassword } from '../utils/bcrypt.util';
+import { generateToken } from '../utils/jwt.util';
+import { AppError } from '../middlewares/error.middleware';
+import { LoginDto, RegisterDto, AuthResponse, ChangePasswordDto } from '../types/auth.types';
+
+export class AuthService {
+  async login(data: LoginDto): Promise<AuthResponse> {
+    const { username, password, role } = data;
+
+    const user = await prisma.user.findUnique({
+      where: { username }
+    });
+
+    if (!user) {
+      throw new AppError('Username atau password salah', 401);
+    }
+
+    if (user.role !== role) {
+      throw new AppError('Role tidak sesuai', 403);
+    }
+
+    if (!user.isActive) {
+      throw new AppError('Akun tidak aktif', 403);
+    }
+
+    const isPasswordValid = await comparePassword(password, user.passwordHash);
+    if (!isPasswordValid) {
+      throw new AppError('Username atau password salah', 401);
+    }
+
+    const token = generateToken({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role
+    });
+
+    return {
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role
+      },
+      token
+    };
+  }
+
+  async register(data: RegisterDto): Promise<AuthResponse> {
+    const { username, email, password, fullName, phone, specialization } = data;
+
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [{ username }, { email }]
+      }
+    });
+
+    if (existingUser) {
+      throw new AppError('Username atau email sudah terdaftar', 400);
+    }
+
+    const hashedPassword = await hashPassword(password);
+
+    const user = await prisma.user.create({
+      data: {
+        username,
+        email,
+        passwordHash: hashedPassword,
+        role: UserRole.PERAWAT,
+        fullName,
+        phone,
+        specialization,
+        isActive: true
+      }
+    });
+
+    const token = generateToken({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role
+    });
+
+    return {
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role
+      },
+      token
+    };
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (!user) {
+      throw new AppError('Email tidak ditemukan', 404);
+    }
+
+    // TODO: Implement email sending logic
+    // For now, just return success
+  }
+
+  async changePassword(userId: string, data: ChangePasswordDto): Promise<void> {
+    const { currentPassword, newPassword } = data;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      throw new AppError('User tidak ditemukan', 404);
+    }
+
+    const isPasswordValid = await comparePassword(currentPassword, user.passwordHash);
+    if (!isPasswordValid) {
+      throw new AppError('Password saat ini salah', 400);
+    }
+
+    const hashedPassword = await hashPassword(newPassword);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: hashedPassword }
+    });
+  }
+
+  async getCurrentUser(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        fullName: true,
+        role: true,
+        phone: true,
+        specialization: true,
+        isActive: true,
+        createdAt: true
+      }
+    });
+
+    if (!user) {
+      throw new AppError('User tidak ditemukan', 404);
+    }
+
+    return user;
+  }
+}
