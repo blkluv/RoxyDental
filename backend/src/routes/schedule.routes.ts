@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { ScheduleController } from '../controllers/schedule.controller';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validation.middleware';
-import { createScheduleSchema } from '../validators/Schedule.validator';
+import { createScheduleSchema } from '../validators/schedule.validator';
 
 const router = Router();
 const scheduleController = new ScheduleController();

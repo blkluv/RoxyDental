@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { PaymentController } from '../controllers/payment.controller';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validation.middleware';
-import { createPaymentSchema } from '../validators/Payment.validator';
+import { createPaymentSchema } from '../validators/payment.validator';
 
 const router = Router();
 const paymentController = new PaymentController();

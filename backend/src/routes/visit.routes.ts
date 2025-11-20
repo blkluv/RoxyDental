@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { VisitController } from '../controllers/visit.controller';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validation.middleware';
-import { createVisitSchema, updateVisitStatusSchema } from '../validators/Visit.validator';
+import { createVisitSchema, updateVisitStatusSchema } from '../validators/visit.validator';
 
 const router = Router();
 const visitController = new VisitController();

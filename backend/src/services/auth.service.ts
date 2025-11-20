@@ -4,7 +4,7 @@ import { hashPassword, comparePassword } from '../utils/bcrypt.util';
 import { generateToken } from '../utils/jwt.util';
 import { AppError } from '../middlewares/error.middleware';
 import { LoginDto, RegisterDto, AuthResponse, ChangePasswordDto } from '../types/auth.types';
-import { emailService } from '../utils/Email.util';
+import { emailService } from '../utils/email.util';
 
 export class AuthService {
   async login(data: LoginDto): Promise<AuthResponse> {
