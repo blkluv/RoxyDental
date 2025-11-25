@@ -78,43 +78,72 @@ export default function LandingPagePro() {
       {/* Main Content */}
       <main className="flex-grow">
 
-        {/* Hero */}
-        <section id="home" className="pt-28 md:pt-32 pb-20 px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6 text-center md:text-left">
-              <div className="inline-block px-4 py-2 bg-pink-100 text-pink-600 rounded-full text-sm font-semibold mb-4">
-                PoloClinic Hub
-              </div>
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight">
-                Aplikasi Klinik <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-pink-600">Polo</span><br /> Efisien & Profesional
-              </h1>
-              <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-xl">
-                Digitalisasi penuh untuk semua pegawai Klinik Polo. Mudah, aman, dan terorganisir.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start mt-6 items-start">
-                <button className="bg-gradient-to-r from-pink-500 to-pink-600 text-white px-8 py-4 rounded-full hover:shadow-2xl transition-all duration-300 font-semibold text-base md:text-lg transform hover:scale-105">
-                  Login 
-                </button>
-                <span className="text-xs sm:text-sm text-gray-500 mt-2 md:mt-0">Hanya untuk pegawai Klinik Polo.</span>
-              </div>
-            </div>
-            <div className="relative max-w-md mx-auto">
-              <div className="absolute inset-0 bg-gradient-to-br from-pink-400 to-pink-600 rounded-3xl transform rotate-6 opacity-20"></div>
-              <div className="relative bg-gradient-to-br from-pink-100 to-pink-200 rounded-3xl p-8 flex items-center justify-center shadow-lg">
-                <svg className="w-full h-full" viewBox="0 0 200 200" fill="none">
-                  <rect x="40" y="40" width="120" height="90" rx="8" fill="white" opacity="0.9"/>
-                  <circle cx="100" cy="85" r="15" fill="url(#grad)"/>
-                  <defs>
-                    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" style={{ stopColor: "#f9a8d4" }} />
-                      <stop offset="100%" style={{ stopColor: "#db2777" }} />
-                    </linearGradient>
-                  </defs>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* Hero Section */}
+<section
+  id="home"
+  className="pt-24 md:pt-32 pb-20 px-4 sm:px-6 lg:px-8 w-full"
+>
+  <div
+    className="
+      container mx-auto w-full
+      grid grid-cols-1 
+      md:grid-cols-2 
+      gap-10 md:gap-16 lg:gap-20 
+      items-center
+    "
+  >
+    {/* LEFT CONTENT */}
+    <div className="w-full space-y-6 text-center md:text-left">
+      <div className="inline-block px-4 py-2 bg-pink-100 text-pink-600 rounded-full text-xs sm:text-sm font-semibold">
+        PoloClinic Hub
+      </div>
+
+      <h1 className="font-bold text-gray-900 leading-tight text-[clamp(1.6rem,4vw,4.5rem)]">
+        Aplikasi Klinik{" "}
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-pink-600">
+          Polo
+        </span>{" "}
+        Efisien & Profesional
+      </h1>
+
+      <p className="text-gray-600 text-sm sm:text-base md:text-lg max-w-full md:max-w-md mx-auto md:mx-0">
+        Digitalisasi penuh untuk semua pegawai Klinik Polo. Mudah, aman dan terorganisir.
+      </p>
+
+      <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start mt-6">
+        <button className="bg-gradient-to-r from-pink-500 to-pink-600 text-white px-8 py-4 rounded-full hover:shadow-2xl transition-all duration-300 font-semibold text-base md:text-lg transform hover:scale-105">
+          Login
+        </button>
+
+        <span className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">
+          Hanya untuk pegawai Klinik Polo.
+        </span>
+      </div>
+    </div>
+
+    {/* RIGHT IMAGE */}
+    <div className="relative w-full flex justify-center">
+      <div className="relative w-full max-w-[450px] scale-[clamp(0.6,2vw,1)]">
+        <div className="absolute inset-0 bg-gradient-to-br from-pink-400 to-pink-600 rounded-3xl rotate-6 opacity-20"></div>
+
+        <div className="relative bg-gradient-to-br from-pink-100 to-pink-200 rounded-3xl p-6 sm:p-10 shadow-lg">
+          <svg className="w-full h-auto" viewBox="0 0 200 200" fill="none">
+            <rect x="40" y="40" width="120" height="90" rx="8" fill="white" opacity="0.9" />
+            <circle cx="100" cy="85" r="15" fill="url(#grad)" />
+            <defs>
+              <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#f9a8d4" />
+                <stop offset="100%" stopColor="#db2777" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
 
         {/* Features */}
         <section id="features" className="py-16 md:py-24 px-6 lg:px-8 bg-white">
@@ -165,10 +194,6 @@ export default function LandingPagePro() {
           <div>
             <h4 className="text-lg sm:text-xl font-semibold mb-4">Newsletter</h4>
             <p className="text-gray-400 text-sm sm:text-base mb-4">Dapatkan info terbaru seputar PoloClinic Hub.</p>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <input type="email" placeholder="Email Anda" className="px-4 py-2 sm:px-5 sm:py-3 rounded-full w-full text-gray-900 focus:outline-none"/>
-              <button className="bg-pink-500 hover:bg-pink-600 px-6 py-2 sm:px-8 sm:py-3 rounded-full text-white font-semibold transition-all">Subscribe</button>
-            </div>
           </div>
         </div>
         <div className="border-t border-gray-700 mt-12 pt-6 text-center text-gray-400 text-sm sm:text-base">
