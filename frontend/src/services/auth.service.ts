@@ -24,15 +24,12 @@ export const authService = {
     return response.data;
   },
 
-  async registerDoctor(data: RegisterRequest): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>('/auth/register-doctor', data);
-    
-    if (response.data.success) {
-      localStorage.setItem('token', response.data.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.data.user));
-    }
-    
-    return response.data;
+  async forgotPassword(email: string): Promise<void> {
+    await api.post('/auth/forgot-password', { email });
+  },
+
+  async resetPassword(email: string, token: string, newPassword: string): Promise<void> {
+    await api.post('/auth/reset-password', { email, token, newPassword });
   },
 
   async getCurrentUser(): Promise<User> {
@@ -41,16 +38,12 @@ export const authService = {
   },
 
   logout(): void {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
   },
 
   getStoredUser(): User | null {
-    if (typeof window === 'undefined') return null;
-    
     const userStr = localStorage.getItem('user');
     if (!userStr) return null;
     
@@ -62,7 +55,6 @@ export const authService = {
   },
 
   getToken(): string | null {
-    if (typeof window === 'undefined') return null;
     return localStorage.getItem('token');
   },
 

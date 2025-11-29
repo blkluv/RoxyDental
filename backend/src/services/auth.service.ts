@@ -178,12 +178,12 @@ export class AuthService {
       throw new AppError('Email tidak ditemukan', 404);
     }
 
-    const token = emailService.generateResetToken(email);
-    await emailService.sendResetEmail(email, token);
+    const token = await emailService.generateResetToken(user.id);
+    await emailService.sendResetEmail(email, token, user.fullName);
   }
 
   async resetPassword(email: string, token: string, newPassword: string): Promise<void> {
-    if (!emailService.verifyResetToken(email, token)) {
+    if (!await emailService.verifyResetToken(email, token)) {
       throw new AppError('Token tidak valid atau sudah kadaluarsa', 400);
     }
 
@@ -202,7 +202,8 @@ export class AuthService {
       data: { passwordHash: hashedPassword }
     });
 
-    emailService.clearResetToken(email);
+    await emailService.clearResetToken(email);
+    await emailService.sendPasswordChangedEmail(email, user.fullName);
   }
 
   async changePassword(userId: string, data: ChangePasswordDto): Promise<void> {
