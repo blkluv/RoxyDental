@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,30 +9,69 @@ import { User, Upload } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import DoctorNavbar from "@/components/ui/navbardr";
 import SettingsSidebar from "@/components/ui/SettingsSidebar";
+import { userService } from "@/services/user.service";
 
 export default function SettingsAccountInfo() {
   const [activeMenu, setActiveMenu] = useState("informasi-akun");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [profileData, setProfileData] = useState({
-    name: "drg. Kartika Yunia Dewari",
-    email: "kartika.yunia@example.com",
-    phone: "+62 812-3456-7890",
-    accountType: "Dokter", // readonly
-    specialization: "Dokter Gigi",
-    strNumber: "STR-123456789",
-    status: "Aktif", // readonly
+    name: "",
+    email: "",
+    phone: "",
+    accountType: "Dokter",
+    specialization: "",
+    strNumber: "",
+    status: "Aktif",
+    education: "",
+    experience: "",
+    sipStartDate: "",
+    sipEndDate: "",
+    profilePhoto: ""
   });
 
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
-
-  // Dialog states
   const [confirmSaveOpen, setConfirmSaveOpen] = useState(false);
   const [successSaveOpen, setSuccessSaveOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [successDeleteOpen, setSuccessDeleteOpen] = useState(false);
 
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      setLoading(true);
+      const response = await userService.getProfile();
+      if (response.success && response.data) {
+        const data = response.data;
+        setProfileData({
+          name: data.fullName || "",
+          email: data.email || "",
+          phone: data.phone || "",
+          accountType: "Dokter",
+          specialization: data.specialization || "",
+          strNumber: data.sipNumber || "",
+          status: data.isActive ? "Aktif" : "Tidak Aktif",
+          education: data.education || "",
+          experience: data.experience || "",
+          sipStartDate: data.sipStartDate ? data.sipStartDate.split('T')[0] : "",
+          sipEndDate: data.sipEndDate ? data.sipEndDate.split('T')[0] : "",
+          profilePhoto: data.profilePhoto || ""
+        });
+        setPreviewPhoto(data.profilePhoto || null);
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.size <= 2 * 1024 * 1024) { // Maksimal 2MB
+    if (file && file.size <= 2 * 1024 * 1024) {
       const reader = new FileReader();
       reader.onload = () => setPreviewPhoto(reader.result as string);
       reader.readAsDataURL(file);
@@ -41,15 +80,56 @@ export default function SettingsAccountInfo() {
     }
   };
 
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const updateData = {
+        fullName: profileData.name,
+        email: profileData.email,
+        phone: profileData.phone,
+        specialization: profileData.specialization,
+        sipNumber: profileData.strNumber,
+        education: profileData.education,
+        experience: profileData.experience,
+        sipStartDate: profileData.sipStartDate,
+        sipEndDate: profileData.sipEndDate,
+        profilePhoto: previewPhoto || profileData.profilePhoto
+      };
+      
+      const response = await userService.updateProfile(updateData);
+      if (response.success) {
+        setConfirmSaveOpen(false);
+        setSuccessSaveOpen(true);
+        await loadProfile();
+      } else {
+        alert('Gagal menyimpan perubahan');
+      }
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      alert('Terjadi kesalahan saat menyimpan');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FFF5F7] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mx-auto"></div>
+          <p className="mt-4 text-pink-600">Memuat data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#FFF5F7]">
       <DoctorNavbar />
       <div className="pt-6 px-4 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar */}
           <SettingsSidebar activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
 
-          {/* Main Content */}
           <div className="lg:col-span-3">
             <Card className="shadow-lg">
               <CardHeader className="bg-pink-100">
@@ -58,7 +138,6 @@ export default function SettingsAccountInfo() {
               </CardHeader>
 
               <CardContent className="p-6">
-                {/* Profile Photo Section */}
                 <div className="flex items-start gap-6 mb-6 mt-6">
                   <div className="relative">
                     <div className="w-28 h-28 rounded-full overflow-hidden border border-pink-200">
@@ -92,7 +171,6 @@ export default function SettingsAccountInfo() {
                   </div>
                 </div>
 
-                {/* Form Fields */}
                 <div className="grid grid-cols-2 gap-6 mb-4">
                   <div>
                     <Label className="text-pink-900 font-semibold mb-1">Nama Lengkap</Label>
@@ -151,6 +229,46 @@ export default function SettingsAccountInfo() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-2 gap-6 mb-4">
+                  <div>
+                    <Label className="text-pink-900 font-semibold mb-1">Pendidikan</Label>
+                    <Input
+                      value={profileData.education}
+                      onChange={(e) => setProfileData({ ...profileData, education: e.target.value })}
+                      className="border-pink-300"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-pink-900 font-semibold mb-1">Pengalaman</Label>
+                    <Input
+                      value={profileData.experience}
+                      onChange={(e) => setProfileData({ ...profileData, experience: e.target.value })}
+                      className="border-pink-300"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6 mb-4">
+                  <div>
+                    <Label className="text-pink-900 font-semibold mb-1">Tanggal Mulai SIP</Label>
+                    <Input
+                      type="date"
+                      value={profileData.sipStartDate}
+                      onChange={(e) => setProfileData({ ...profileData, sipStartDate: e.target.value })}
+                      className="border-pink-300"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-pink-900 font-semibold mb-1">Tanggal Berakhir SIP</Label>
+                    <Input
+                      type="date"
+                      value={profileData.sipEndDate}
+                      onChange={(e) => setProfileData({ ...profileData, sipEndDate: e.target.value })}
+                      className="border-pink-300"
+                    />
+                  </div>
+                </div>
+
                 <div className="mb-6">
                   <Label className="text-pink-900 font-semibold mb-1">Status Akun</Label>
                   <Input
@@ -160,7 +278,6 @@ export default function SettingsAccountInfo() {
                   />
                 </div>
 
-                {/* Action Buttons */}
                 <div className="flex justify-end gap-3 pt-4 border-t border-pink-200">
                   <Button
                     variant="outline"
@@ -172,8 +289,9 @@ export default function SettingsAccountInfo() {
                   <Button
                     className="bg-pink-600 hover:bg-pink-700 text-white px-8"
                     onClick={() => setConfirmSaveOpen(true)}
+                    disabled={saving}
                   >
-                    Simpan Perubahan
+                    {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
                   </Button>
                 </div>
               </CardContent>
@@ -186,7 +304,6 @@ export default function SettingsAccountInfo() {
         </p>
       </div>
 
-      {/* Dialogs */}
       <Dialog open={confirmSaveOpen} onOpenChange={setConfirmSaveOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -200,12 +317,10 @@ export default function SettingsAccountInfo() {
             </Button>
             <Button
               className="bg-pink-600 hover:bg-pink-700 text-white px-8"
-              onClick={() => {
-                setConfirmSaveOpen(false);
-                setSuccessSaveOpen(true);
-              }}
+              onClick={handleSave}
+              disabled={saving}
             >
-              Ya, Simpan
+              {saving ? 'Menyimpan...' : 'Ya, Simpan'}
             </Button>
           </div>
         </DialogContent>

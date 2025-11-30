@@ -1,10 +1,11 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import DoctorNavbar from "@/components/ui/navbardr";
-
+import { userService } from "@/services/user.service";
 import {
   CreditCard,
   Briefcase,
@@ -14,11 +15,78 @@ import {
   MapPin,
   Calendar,
   FileText,
-  ArrowRight,
-  BadgeCheck
+  BadgeCheck,
+  User
 } from "lucide-react";
 
 export default function MedicalStaffProfile() {
+  const [profileData, setProfileData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      setLoading(true);
+      const response = await userService.getProfile();
+      if (response.success) {
+        setProfileData(response.data);
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full bg-[#FFE6EE] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mx-auto"></div>
+          <p className="mt-4 text-pink-600">Memuat data...</p>
+        </div>
+      </div>
+    );
+  };
+
+  const formatDate = (date: string | null) => {
+    if (!date) return '-';
+    return new Date(date).toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
+  const calculateSipRemaining = () => {
+    if (!profileData?.sipStartDate || !profileData?.sipEndDate) return null;
+
+    const today = new Date();
+    const end = new Date(profileData.sipEndDate);
+    const start = new Date(profileData.sipStartDate);
+
+    const totalDays = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const remainingDays = Math.floor((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    const percentage = (remainingDays / totalDays) * 100;
+    const years = Math.floor(remainingDays / 365);
+    const months = Math.floor((remainingDays % 365) / 30);
+
+    return {
+      percentage: Math.max(0, percentage),
+      years,
+      months
+    };
+  };
+
+  const sipRemaining = calculateSipRemaining();
+  const practiceStatus = profileData?.sipNumber && profileData?.sipEndDate ? 
+    (new Date(profileData.sipEndDate) > new Date() ? 'ACTIVE' : 'EXPIRED') : 
+    'INACTIVE';
+
   return (
     <div className="min-h-screen w-full bg-[#FFE6EE]">
       <DoctorNavbar />
@@ -26,33 +94,32 @@ export default function MedicalStaffProfile() {
       <div className="px-10 py-10 w-full">
         <h1 className="text-3xl font-bold text-[#D6336C] mb-1">Profil Tenaga Medis</h1>
         <p className="text-[#E85A88] mb-6">
-          Informasi Akun & Status Praktik Anda di Klinik Sehat
+          Informasi Akun & Status Praktik Anda di Klinik
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* ======================= */}
-          {/* INFORMASI PROFIL */}
-          {/* ======================= */}
           <Card className="rounded-2xl overflow-hidden shadow-lg border-0 bg-white">
             <div className="bg-[#FF8FB3] px-6 py-5">
               <h2 className="text-white text-xl font-bold">INFORMASI PROFIL</h2>
             </div>
 
             <CardContent className="p-6">
-              {/* FOTO + IDENTITAS */}
               <div className="flex items-start gap-6 mb-8 mt-4">
                 <div className="relative">
                   <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-xl">
-                    <Image
-                      src="/avatar-placeholder.jpg"
-                      alt="avatar"
-                      width={140}
-                      height={140}
-                      className="object-cover"
-                    />
+                    {profileData?.profilePhoto ? (
+                      <img
+                        src={profileData.profilePhoto}
+                        alt={profileData.fullName}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                        <User className="w-16 h-16 text-gray-400" />
+                      </div>
+                    )}
                   </div>
 
-                  {/* STATUS AKTIF */}
                   <span className="absolute bottom-1 right-1 w-7 h-7 bg-green-500 rounded-full border-4 border-white flex items-center justify-center shadow-md">
                     <svg
                       className="w-3 h-3 text-white"
@@ -68,114 +135,109 @@ export default function MedicalStaffProfile() {
                   </span>
                 </div>
 
-                {/* NAMA + ROLE */}
                 <div className="flex-1 mt-2">
                   <h3 className="text-2xl font-bold text-[#C2185B] mb-1">
-                    drg. Kartika Yusriya Dinanti
+                    {profileData?.fullName || 'Nama Dokter'}
                   </h3>
-                  <p className="text-[#EB5A88] mb-4">Dokter Gigi</p>
+                  <p className="text-[#EB5A88] mb-4">{profileData?.specialization || 'Dokter Gigi'}</p>
                 </div>
               </div>
 
-              {/* DATA PROFIL */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <InfoItem label="ID Karyawan" value="DKT-2024-001234" icon="id" />
-                <InfoItem label="No. STR" value="1234567890123456567" icon="badge" />
-                <InfoItem label="No. SIP" value="503/SIP/DPMSPT/2024" icon="file" />
-                <InfoItem label="Nomor Telepon" value="+62 812-3456-7890" icon="phone" />
-                <InfoItem label="Email" value="kartika.yusriya@roxydental.com" icon="mail" />
-                <InfoItem label="Lokasi Praktik" value="RoxyDental - Jakarta Pusat" icon="map" />
-                <InfoItem label="Bergabung Sejak" value="15 Januari 2024" icon="calendar" />
+                <InfoItem label="ID Karyawan" value={profileData?.username || '-'} icon="id" />
+                <InfoItem label="No. STR" value={profileData?.sipNumber || '-'} icon="badge" />
+                <InfoItem label="Nomor Telepon" value={profileData?.phone || '-'} icon="phone" />
+                <InfoItem label="Email" value={profileData?.email || '-'} icon="mail" />
+                <InfoItem 
+                  label="Bergabung Sejak" 
+                  value={formatDate(profileData?.createdAt)} 
+                  icon="calendar" 
+                />
               </div>
             </CardContent>
           </Card>
 
-          {/* ======================= */}
-          {/* JADWAL & LISENSI */}
-          {/* ======================= */}
           <Card className="rounded-2xl overflow-hidden shadow-lg border-0 bg-white">
             <div className="bg-[#F2C94C] px-6 py-5">
               <h2 className="text-yellow-900 text-xl font-bold">JADWAL & LISENSI</h2>
             </div>
 
             <CardContent className="p-6">
-              {/* STATUS PRAKTIK */}
-             <div className="bg-white rounded-xl p-4 mb-6 shadow-sm border border-t-0 border-yellow-100 mt-4">
+              <div className="bg-white rounded-xl p-4 mb-6 shadow-sm border border-t-0 border-yellow-100 mt-4">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-yellow-900 font-semibold">Status Praktik</span>
-                  <div className="flex items-center gap-2 bg-green-500 text-white px-4 py-1 rounded-full text-sm font-bold">
+                  <div className={`flex items-center gap-2 px-4 py-1 rounded-full text-sm font-bold ${
+                    practiceStatus === 'ACTIVE' ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'
+                  }`}>
                     <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                    AKTIF
+                    {practiceStatus === 'ACTIVE' ? 'AKTIF' : 'TIDAK AKTIF'}
                   </div>
                 </div>
                 <div className="bg-yellow-50 p-3 rounded-lg">
-                  <p className="text-yellow-800 text-sm font-medium">Sedang Bertugas</p>
+                  <p className="text-sm text-yellow-800 font-medium">
+                    {practiceStatus === 'ACTIVE' ? 'Sedang Bertugas' : 'Lengkapi nomor SIP untuk mengaktifkan'}
+                  </p>
                 </div>
               </div>
 
-              {/* MASA BERLAKU SIP */}
-              <div className="bg-white rounded-xl p-4 mb-6 shadow-sm border border-yellow-100">
-                <div className="flex items-start gap-3">
-                  <Briefcase className="w-5 h-5 text-yellow-600 mt-1" />
-                  <div className="flex-1">
-                    <p className="text-yellow-900 font-semibold mb-1">Masa Berlaku SIP</p>
-                    <p className="text-lg font-bold text-yellow-600">
-                      15 Jan 2024 - 15 Jan 2027
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* SISA MASA BERLAKU */}
-              <div className="bg-white rounded-xl p-4 mb-6 shadow-sm border border-yellow-100">
-                <div className="flex items-start gap-3">
-                  <Clock className="w-5 h-5 text-yellow-600 mt-1" />
-                  <div className="flex-1">
-                    <p className="text-yellow-900 font-semibold mb-2">Sisa Masa Berlaku</p>
-
-                    <div className="bg-yellow-100 rounded-full h-3 overflow-hidden mb-2">
-                      <div
-                        className="bg-gradient-to-r from-yellow-400 to-yellow-500 h-full rounded-full"
-                        style={{ width: "75%" }}
-                      />
+              {profileData?.sipStartDate && profileData?.sipEndDate && (
+                <>
+                  <div className="bg-white rounded-xl p-4 mb-6 shadow-sm border border-yellow-100">
+                    <div className="flex items-start gap-3">
+                      <Briefcase className="w-5 h-5 text-yellow-600 mt-1" />
+                      <div className="flex-1">
+                        <p className="text-yellow-900 font-semibold mb-1">Masa Berlaku SIP</p>
+                        <p className="text-lg font-bold text-yellow-600">
+                          {formatDate(profileData.sipStartDate)} - {formatDate(profileData.sipEndDate)}
+                        </p>
+                      </div>
                     </div>
-
-                    <p className="text-right text-yellow-900 font-bold">2.5 tahun</p>
                   </div>
-                </div>
-              </div>
 
-              {/* JADWAL */}
-              <div className="bg-white rounded-xl p-4 mb-6 shadow-sm border border-yellow-100">
-                <p className="text-yellow-900 font-semibold mb-3">Jadwal Praktik Minggu Ini:</p>
+                  {sipRemaining && (
+                    <div className="bg-white rounded-xl p-4 mb-6 shadow-sm border border-yellow-100">
+                      <div className="flex items-start gap-3">
+                        <Clock className="w-5 h-5 text-yellow-600 mt-1" />
+                        <div className="flex-1">
+                          <p className="text-yellow-900 font-semibold mb-2">Sisa Masa Berlaku</p>
 
-                <ScheduleItem day="Senin - Rabu" time="08:00 - 16:00" />
-                <ScheduleItem day="Kamis" time="13:00 - 21:00" />
-                <ScheduleItem day="Jumat" time="08:00 - 12:00" />
-              </div>
+                          <div className="bg-yellow-100 rounded-full h-3 overflow-hidden mb-2">
+                            <div
+                              className="bg-linear-to-r from-yellow-400 to-yellow-500 h-full rounded-full"
+                              style={{ width: `${sipRemaining.percentage}%` }}
+                            />
+                          </div>
 
-              <Button className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2">
+                          <p className="text-right text-yellow-900 font-bold">
+                            {sipRemaining.years} tahun {sipRemaining.months} bulan
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              <Button 
+                className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2"
+                onClick={() => window.location.href = '/dashboard/dokter/kalender'}
+              >
                 Lihat Jadwal Lengkap
-                <ArrowRight className="w-5 h-5" />
               </Button>
             </CardContent>
           </Card>
         </div>
 
         <p className="text-center text-sm text-[#EB5A88] mt-8">
-          © 2025 RoxyDental. Platform untuk klinik gigi modern
+          © 2025 Klinik. Platform untuk klinik modern
         </p>
       </div>
     </div>
   );
 }
 
-/* ============================
-   COMPONENT KECIL
-=============================== */
-
-function InfoItem({ label, value, icon }) {
-  const iconMap = {
+function InfoItem({ label, value, icon }: { label: string; value: string; icon: string }) {
+  const iconMap: any = {
     id: <CreditCard className="w-5 h-5 text-pink-600" />,
     badge: <BadgeCheck className="w-5 h-5 text-pink-600" />,
     file: <FileText className="w-5 h-5 text-pink-600" />,
@@ -194,20 +256,6 @@ function InfoItem({ label, value, icon }) {
 
       <div className="w-10 h-10 rounded-full bg-pink-200 flex items-center justify-center shadow-lg">
         {iconMap[icon]}
-      </div>
-    </div>
-  );
-}
-
-
-function ScheduleItem({ day, time }) {
-  return (
-    <div className="flex items-center justify-between py-2 border-b border-yellow-100 last:border-0">
-      <div className="flex items-center gap-3">
-        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-        <span className="text-yellow-900 font-medium">
-          {day}: {time}
-        </span>
       </div>
     </div>
   );

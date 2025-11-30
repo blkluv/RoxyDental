@@ -17,7 +17,13 @@ model User {
   fullName            String         @map("full_name") @db.VarChar(255)
   phone               String         @db.VarChar(20)
   specialization      String?        @db.VarChar(100)
-  resetPasswordToken   String?       @map("reset_password_token")   @db.VarChar(255)
+  education           String?        @db.VarChar(255)
+  experience          String?        @db.VarChar(255)
+  sipNumber           String?        @map("sip_number") @db.VarChar(100)
+  sipStartDate        DateTime?      @map("sip_start_date") @db.Date
+  sipEndDate          DateTime?      @map("sip_end_date") @db.Date
+  profilePhoto        String?        @map("profile_photo") @db.VarChar(500)
+  resetPasswordToken   String?       @map("reset_password_token") @db.VarChar(255)
   resetPasswordExpires DateTime?     @map("reset_password_expires") @db.Timestamp(6)
   isActive            Boolean        @default(true) @map("is_active")
   createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamp(6)

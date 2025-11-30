@@ -50,4 +50,18 @@ router.patch(
   userController.toggleUserStatus
 );
 
+router.get(
+  '/profile',
+  authMiddleware,
+  roleMiddleware(UserRole.DOKTER),
+  userController.getProfile
+);
+
+router.put(
+  '/profile',
+  authMiddleware,
+  roleMiddleware(UserRole.DOKTER),
+  userController.updateProfile
+);
+
 export default router;

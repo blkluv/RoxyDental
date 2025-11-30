@@ -60,4 +60,22 @@ export class UserController {
       next(error);
     }
   }
+
+  async getProfile(req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    const profile = await userService.getProfile(req.user!.id);
+    res.json(successResponse('Profil berhasil diambil', profile));
+  } catch (error) {
+    next(error);
+  }
+}
+
+  async updateProfile(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const profile = await userService.updateProfile(req.user!.id, req.body);
+      res.json(successResponse('Profil berhasil diupdate', profile));
+    } catch (error) {
+      next(error);
+    }
+  }
 }
