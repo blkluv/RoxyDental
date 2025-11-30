@@ -166,7 +166,7 @@ export default function Navbar() {
                     <p className="text-sm text-gray-500">{profile?.specialization || 'Dokter Gigi'}</p>
                     <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                       <MapPin className="w-3 h-3" />
-                      <span>Soso Dental Kemang</span>
+                      <span>POLADC</span>
                     </div>
                   </div>
                 </div>
