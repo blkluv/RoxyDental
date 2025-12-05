@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 
 import {
-  Bell,
   User,
   ChevronDown,
   Calendar,
@@ -22,18 +21,13 @@ import {
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
-        setShowNotifications(false);
-      }
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
         setShowProfile(false);
       }
@@ -41,33 +35,6 @@ export default function Navbar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  // ======================
-  // **NOTIFIKASI PERAWAT**
-  // ======================
-  const notifications = [
-    {
-      title: "Pasien Masuk Antrian",
-      desc: "Pasien Budi Santoso masuk antrian pemeriksaan",
-      time: "2 menit lalu",
-      icon: <Users className="w-5 h-5 text-blue-600" />,
-      bg: "bg-blue-100",
-    },
-    {
-      title: "Butuh Tindakan",
-      desc: "dr. Sinta meminta persiapan alat untuk pasien Lina",
-      time: "15 menit lalu",
-      icon: <Stethoscope className="w-5 h-5 text-pink-600" />,
-      bg: "bg-pink-100",
-    },
-    {
-      title: "Update Jadwal",
-      desc: "Jadwal hari ini diperbarui oleh admin klinik",
-      time: "1 jam lalu",
-      icon: <Calendar className="w-5 h-5 text-green-600" />,
-      bg: "bg-green-100",
-    },
-  ];
 
   const handleLogout = () => {
     window.location.href = "/";
@@ -86,54 +53,10 @@ export default function Navbar() {
 
         {/* RIGHT SIDE */}
         <div className="flex items-center gap-5">
-          {/* NOTIFICATION */}
-          <div className="relative" ref={notifRef}>
-            <button
-              onClick={() => {
-                setShowNotifications(!showNotifications);
-                setShowProfile(false);
-              }}
-              className="p-2 rounded-lg hover:bg-white/10 relative"
-            >
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-yellow-300 rounded-full" />
-            </button>
-
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-96 bg-white text-gray-800 rounded-xl shadow-xl border border-gray-200 overflow-hidden">
-                <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                  <h3 className="font-semibold">Notifikasi</h3>
-                  <Badge className="text-yellow-700">3 Baru</Badge>
-                </div>
-
-                <div className="max-h-80 overflow-y-auto">
-                  {notifications.map((n, i) => (
-                    <div
-                      key={i}
-                      className="flex gap-3 p-4 border-b border-gray-200 hover:bg-gray-50 transition cursor-pointer"
-                    >
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${n.bg}`}>
-                        {n.icon}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium text-sm">{n.title}</h4>
-                        <p className="text-xs mt-1">{n.desc}</p>
-                        <p className="text-xs text-gray-400 mt-1">{n.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* PROFILE DROPDOWN */}
           <div className="relative" ref={profileRef}>
             <button
-              onClick={() => {
-                setShowProfile(!showProfile);
-                setShowNotifications(false);
-              }}
+              onClick={() => setShowProfile(!showProfile)}
               className="flex items-center gap-2 hover:bg-white/10 px-3 py-2 rounded-lg"
             >
               <span className="text-sm font-medium">Suster Nabila</span>
