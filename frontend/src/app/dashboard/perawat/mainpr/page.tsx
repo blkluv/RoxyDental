@@ -9,9 +9,12 @@ import {
   Briefcase, Award, Loader2 
 } from "lucide-react";
 import { dashboardNurseService, NurseDashboardData } from '@/services/dashboard-nurse.service';
+import { nurseProfileService, ProfileCompletion, ShiftStatus } from '@/services/nurse-profile.service';
 
 export default function DoctorDashboard() {
   const [dashboardData, setDashboardData] = useState<NurseDashboardData | null>(null);
+  const [completion, setCompletion] = useState<ProfileCompletion | null>(null);
+  const [shiftStatus, setShiftStatus] = useState<ShiftStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,8 +25,15 @@ export default function DoctorDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const response = await dashboardNurseService.getNurseSummary();
-      setDashboardData(response.data);
+      const [dashboardRes, completionRes, shiftRes] = await Promise.all([
+        dashboardNurseService.getNurseSummary(),
+        nurseProfileService.getProfileCompletion(),
+        nurseProfileService.getCurrentShiftStatus()
+      ]);
+      
+      setDashboardData(dashboardRes.data);
+      setCompletion(completionRes.data);
+      setShiftStatus(shiftRes.data);
       setError(null);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Gagal memuat data dashboard');
@@ -93,13 +103,37 @@ export default function DoctorDashboard() {
 
                 <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
                   <MapPin className="w-4 h-4" />
-                  <span>Tempat Praktik</span>
+                  <span>RoxyDental Clinic</span>
                 </div>
 
                 <Badge className="mt-2 bg-pink-100 text-pink-700 border-none w-fit">
                   {profile.specialization || 'Perawat Klinik'}
                 </Badge>
               </div>
+            </div>
+
+            <div className="flex flex-col items-end gap-2">
+              {completion && (
+                <div className="bg-white px-4 py-2 rounded-lg shadow-sm">
+                  <p className="text-xs text-gray-500">Kelengkapan Profil</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-pink-500 transition-all"
+                        style={{ width: `${completion.percentage}%` }}
+                      />
+                    </div>
+                    <span className="text-sm font-bold text-pink-700">{completion.percentage}%</span>
+                  </div>
+                </div>
+              )}
+
+              {shiftStatus && shiftStatus.status === 'On Duty' && (
+                <Badge className="bg-green-100 text-green-800 border-none">
+                  <Clock className="w-3 h-3 mr-1" />
+                  {shiftStatus.status}
+                </Badge>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -226,13 +260,13 @@ export default function DoctorDashboard() {
                       Kedokteran Gigi Umum
                     </Badge>
                     <Badge className="bg-green-50 text-green-700 border border-green-200 rounded-full px-4 py-1 shadow-sm font-medium">
-                      Bedah Gigi
+                      Perawatan Preventif
                     </Badge>
                     <Badge className="bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-4 py-1 shadow-sm font-medium">
-                      Perawatan Saluran Akar
+                      Asisten Tindakan
                     </Badge>
                     <Badge className="bg-purple-50 text-purple-700 border border-purple-200 rounded-full px-4 py-1 shadow-sm font-medium">
-                      Ortodonti
+                      Edukasi Kesehatan
                     </Badge>
                   </div>
                 </div>
