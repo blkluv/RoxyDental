@@ -24,7 +24,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      router.push('/dashboard/perawat/main');
+      router.push('/register');
     }
   }, [isAuthenticated, authLoading, router]);
 

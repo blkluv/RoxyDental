@@ -180,7 +180,7 @@ export default function MedicalRecordsPage() {
   const openDetail = (row: PatientWithVisit) => {
     const medicalRecordNumber = row.medicalRecordNumber;
     if (medicalRecordNumber) {
-      router.push(`/dashboard/perawat/pasienpr/rekam-medis/${medicalRecordNumber}`);
+      router.push(`/dashboard/perawat/pasienpr/rekam-medis/${encodeURIComponent(medicalRecordNumber)}`);
     } else {
       toast({
         title: "Error",

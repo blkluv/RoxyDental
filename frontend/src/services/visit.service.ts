@@ -122,9 +122,9 @@ export const visitService = {
   },
 
   async getVisitById(id: string): Promise<Visit> {
-    const res = await apiClient.get(`/doctor/visits/${id}`);
-    return res.data.data || res.data;
-  },
+  const res = await apiClient.get(`/doctor/visits/${id}`);  // BENAR
+  return res.data.data || res.data;
+},
 
   async getVisitByNumber(visitNumber: string): Promise<Visit> {
     const res = await apiClient.get(`/doctor/visits/number/${visitNumber}`);
