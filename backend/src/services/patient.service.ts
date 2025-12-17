@@ -52,6 +52,23 @@ export class PatientService {
     return `RM-${year}${month}-${String(sequence).padStart(4, '0')}`;
   }
 
+  async updateMedicalHistory(patientId: string, medicalHistory: string) {
+  const patient = await prisma.patient.findUnique({
+    where: { id: patientId }
+  });
+
+  if (!patient) {
+    throw new AppError("Pasien tidak ditemukan", 404);
+  }
+
+  const updated = await prisma.patient.update({
+    where: { id: patientId },
+    data: { medicalHistory }
+  });
+
+    return updated;
+  }
+
   async getPatients(page: number = 1, limit: number = 10, search?: string) {
     const skip = (page - 1) * limit;
 

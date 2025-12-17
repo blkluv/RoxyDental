@@ -34,6 +34,13 @@ export const patientService = {
     }
   },
 
+  async updateMedicalHistory(patientId: string, medicalHistory: string) {
+  const response = await apiClient.put(`/doctor/patients/${patientId}/medical-history`, {
+    medicalHistory
+  });
+  return response.data;
+  },
+
   async getPatientById(id: string) {
     const response = await apiClient.get(`/doctor/patients/${id}`);
     return response.data;

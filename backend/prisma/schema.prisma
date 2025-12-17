@@ -44,6 +44,24 @@ model User {
   @@map("users")
 }
 
+model Medication {
+  id           String   @id @default(uuid()) @db.Uuid
+  visitId      String   @map("visit_id") @db.Uuid
+  patientId    String   @map("patient_id") @db.Uuid
+  name         String   @db.VarChar(255)
+  quantity     String   @db.VarChar(100)
+  instructions String?  @db.Text
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+  
+  visit   Visit   @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([visitId])
+  @@index([patientId])
+  @@map("medications")
+}
+
 model Patient {
   id                  String      @id @default(uuid()) @db.Uuid
   patientNumber       String      @unique @map("patient_number") @db.VarChar(50)
@@ -61,6 +79,7 @@ model Patient {
   medicalRecordNumber String?     @unique @map("medical_record_number") @db.VarChar(50)
   treatments          Treatment[]
   visits              Visit[]
+  medications         Medication[]
 
   @@index([patientNumber])
   @@index([fullName])
@@ -168,6 +187,7 @@ model Visit {
   updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamp(6)
   payments       Payment[]
   treatments     Treatment[]
+  medications    Medication[]
   nurse          User        @relation("NurseVisits", fields: [nurseId], references: [id])
   patient        Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
 

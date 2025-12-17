@@ -12,6 +12,7 @@ import userRoutes from './user.routes';
 import treatmentRoutes from './treatment.routes';
 import nurseProfileRoutes from './nurse-profile.routes';
 import financeRoutes from './finance.routes';
+import medicationRoutes from './medication.routes';
 
 const router = Router();
 
@@ -28,5 +29,6 @@ router.use('/doctor/finance/commissions', commissionRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/users', userRoutes);
 router.use('/doctor/finance', financeRoutes);
+router.use('/medications', medicationRoutes);
 
 export default router;

@@ -20,6 +20,18 @@ export class PatientController {
     }
   }
 
+  async updateMedicalHistory(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const patient = await patientService.updateMedicalHistory(
+        req.params.id,
+        req.body.medicalHistory
+      );
+      res.json(successResponse("Riwayat medis berhasil diupdate", patient));
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getPatientById(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const patient = await patientService.getPatientById(req.params.id);

@@ -109,51 +109,57 @@ export class VisitService {
   }
 
   async getVisitByMedicalRecord(medicalRecordNumber: string) {
-    const patient = await prisma.patient.findFirst({
-      where: { medicalRecordNumber }
-    });
+  const patient = await prisma.patient.findFirst({
+    where: { medicalRecordNumber }
+  });
 
-    if (!patient) {
-      throw new AppError("Pasien dengan nomor rekam medis tersebut tidak ditemukan", 404);
-    }
+  if (!patient) {
+    throw new AppError("Pasien dengan nomor rekam medis tersebut tidak ditemukan", 404);
+  }
 
-    const visit = await prisma.visit.findFirst({
-      where: { 
-        patientId: patient.id,
-        status: VisitStatus.COMPLETED
-      },
-      include: {
-        patient: true,
-        nurse: {
-          select: {
-            id: true,
-            fullName: true,
-          },
+  const visit = await prisma.visit.findFirst({
+    where: { 
+      patientId: patient.id,
+      status: VisitStatus.COMPLETED
+    },
+    include: {
+      patient: true,
+      nurse: {
+        select: {
+          id: true,
+          fullName: true,
         },
-        treatments: {
-          include: {
-            service: true,
-            performer: {
-              select: {
-                id: true,
-                fullName: true,
-              },
+      },
+      treatments: {
+        include: {
+          service: true,
+          performer: {
+            select: {
+              id: true,
+              fullName: true,
+              specialization: true,
             },
           },
-          orderBy: {
-            createdAt: "desc",
-          },
         },
-        payments: true,
+        orderBy: {
+          createdAt: "desc",
+        },
       },
-      orderBy: {
-        visitDate: "desc"
-      }
-    });
-
-    if (!visit) {
-      throw new AppError("Kunjungan tidak ditemukan", 404);
+      medications: {
+        orderBy: {
+          createdAt: "asc"
+        }
+      },
+      payments: true,
+    },
+    orderBy: {
+      visitDate: "desc"
     }
+  });
+
+  if (!visit) {
+    throw new AppError("Kunjungan tidak ditemukan", 404);
+  }
 
     return visit;
   }

@@ -16,16 +16,16 @@ import {
 } from "lucide-react";
 import DoctorNavbar from "@/components/ui/navbardr";
 import { visitService, Visit } from "@/services/visit.service";
-import { treatmentService } from "@/services/treatment.service";
+import { medicationService, CreateMedicationData } from "@/services/medication.service";
+import { patientService } from "@/services/patient.service";
+import { dashboardService } from "@/services/dashboard.service";
 import { useToast } from "@/hooks/use-toast";
 
 interface Medication {
   id?: string;
   name: string;
-  dosage: string;
-  duration: string;
+  quantity: string;
   instructions?: string;
-  serviceId?: string;
 }
 
 interface Examination {
@@ -35,7 +35,6 @@ interface Examination {
 }
 
 export default function RekamMedisDetailPage() {
-  // ✅ Fix "id merah" / typing params
   const { visitNumber } = useParams<{ visitNumber: string }>();
   const router = useRouter();
   const { toast } = useToast();
@@ -46,6 +45,7 @@ export default function RekamMedisDetailPage() {
   const [saving, setSaving] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [visit, setVisit] = useState<Visit | null>(null);
+  const [currentDoctorName, setCurrentDoctorName] = useState<string>("-");
 
   const [editDiagnosis, setEditDiagnosis] = useState(false);
   const [editExam, setEditExam] = useState(false);
@@ -65,9 +65,22 @@ export default function RekamMedisDetailPage() {
   const [deletedMedIds, setDeletedMedIds] = useState<string[]>([]);
 
   useEffect(() => {
+    const fetchDoctorInfo = async () => {
+      try {
+        const res = await dashboardService.getDoctorSummary();
+        const name = res?.data?.profile?.fullName;
+        if (name) setCurrentDoctorName(name);
+      } catch {
+        setCurrentDoctorName("-");
+      }
+    };
+
+    fetchDoctorInfo();
+  }, []);
+
+  useEffect(() => {
     if (!medicalRecordNumber) return;
     fetchVisitData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [medicalRecordNumber]);
 
   const fetchVisitData = async () => {
@@ -79,8 +92,8 @@ export default function RekamMedisDetailPage() {
       );
       setVisit(response);
 
-      const firstTreatment = response.treatments?.[0];
-      setDiagnosisDraft(firstTreatment?.diagnosis || "");
+      const medicalHistory = (response as any).patient?.medicalHistory || "";
+      setDiagnosisDraft(medicalHistory);
 
       setExamDraft({
         chiefComplaint: response.chiefComplaint || "",
@@ -88,15 +101,12 @@ export default function RekamMedisDetailPage() {
         treatmentPlan: response.notes || "",
       });
 
-      const extractedMeds =
-        response.treatments?.map((t: any) => ({
-          id: t.id,
-          name: t.service?.serviceName || "",
-          dosage: `${t.quantity ?? 1}`,
-          duration: "Sesuai kebutuhan",
-          instructions: t.treatmentNotes || "",
-          serviceId: t.service?.id || "",
-        })) || [];
+      const extractedMeds = ((response as any).medications || []).map((m: any) => ({
+        id: m.id,
+        name: m.name || "",
+        quantity: m.quantity || "1",
+        instructions: m.instructions || "",
+      }));
       setMedsDraft(extractedMeds);
 
       setNotesDraft(response.notes || "");
@@ -115,15 +125,13 @@ export default function RekamMedisDetailPage() {
   };
 
   const handleSaveDiagnosis = async () => {
-    if (!visit || !visit.treatments?.[0]) return;
+    if (!visit) return;
 
     try {
       setSaving(true);
-      const firstTreatment: any = visit.treatments[0];
+      const patientId = (visit as any).patient?.id;
 
-      await treatmentService.updateTreatment(firstTreatment.id, {
-        diagnosis: diagnosisDraft,
-      });
+      await patientService.updateMedicalHistory(patientId, diagnosisDraft);
 
       await fetchVisitData();
       setEditDiagnosis(false);
@@ -189,30 +197,29 @@ export default function RekamMedisDetailPage() {
     try {
       setSaving(true);
 
-      // hapus meds yang ditandai
       for (const medId of deletedMedIds) {
-        await treatmentService.deleteTreatment(medId);
+        await medicationService.deleteMedication(medId);
       }
 
-      // update/create meds
       for (const med of medsDraft) {
         if (med.id) {
-          await treatmentService.updateTreatment(med.id, {
-            treatmentNotes: med.instructions,
-            quantity: parseInt(med.dosage, 10) || 1,
+          await medicationService.updateMedication(med.id, {
+            name: med.name,
+            quantity: med.quantity,
+            instructions: med.instructions,
           });
         } else {
           if (!med.name.trim()) continue;
 
-          await treatmentService.createTreatment({
+          const createData: CreateMedicationData = {
             visitId: (visit as any).id,
-            serviceId: med.serviceId || "",
-            performerId:
-              (visit as any).treatments?.[0]?.performer?.id || "",
-            diagnosis: (visit as any).treatments?.[0]?.diagnosis || "",
-            treatmentNotes: med.instructions || "",
-            quantity: parseInt(med.dosage, 10) || 1,
-          });
+            patientId: (visit as any).patient?.id,
+            name: med.name,
+            quantity: med.quantity,
+            instructions: med.instructions,
+          };
+
+          await medicationService.createMedication(createData);
         }
       }
 
@@ -267,10 +274,8 @@ export default function RekamMedisDetailPage() {
       ...medsDraft,
       {
         name: "",
-        dosage: "1",
-        duration: "Sesuai kebutuhan",
+        quantity: "1",
         instructions: "",
-        serviceId: "",
       },
     ]);
   };
@@ -312,6 +317,12 @@ export default function RekamMedisDetailPage() {
     } catch {
       return 0;
     }
+  };
+
+  const getTindakan = () => {
+    if (!visit) return "-";
+    const firstTreatment = (visit as any).treatments?.[0];
+    return (visit as any).chiefComplaint || firstTreatment?.service?.serviceName || "-";
   };
 
   const handlePrint = () => window.print();
@@ -543,13 +554,12 @@ export default function RekamMedisDetailPage() {
       drawTable(patientRows, patientColWidths);
 
       drawSectionTitle("Informasi Kunjungan Terkini");
-      const firstTreatment: any = (visit as any).treatments?.[0];
       drawTable(
         [
           ["Tanggal Kunjungan", formatDate((visit as any).visitDate)],
-          ["Dokter Pemeriksa", firstTreatment?.performer?.fullName || "-"],
-          ["Tindakan", firstTreatment?.service?.serviceName || "-"],
-          ["Diagnosis", firstTreatment?.diagnosis || "-"],
+          ["Dokter Pemeriksa", currentDoctorName],
+          ["Tindakan", getTindakan()],
+          ["Diagnosis", (visit as any).patient?.medicalHistory || "-"],
         ],
         [130, CONTENT_WIDTH - 130]
       );
@@ -565,7 +575,7 @@ export default function RekamMedisDetailPage() {
       );
 
       drawSectionTitle("Obat yang Diberikan");
-      const pdfMeds: any[] = (visit as any).treatments || [];
+      const pdfMeds: any[] = (visit as any).medications || [];
       if (!Array.isArray(pdfMeds) || pdfMeds.length === 0) {
         drawTable([["Obat", "Tidak ada obat yang diresepkan."]], [
           90,
@@ -574,9 +584,9 @@ export default function RekamMedisDetailPage() {
       } else {
         const medRows = pdfMeds.map((m: any, i: number) => [
           (i + 1).toString(),
-          `${m.service?.serviceName || "-"}${
-            m.quantity ? " | Qty: " + m.quantity : ""
-          }${m.treatmentNotes ? " | " + m.treatmentNotes : ""}`,
+          `${m.name || "-"} | Qty: ${m.quantity || "-"}${
+            m.instructions ? " | " + m.instructions : ""
+          }`,
         ]);
 
         drawTable([["No", "Rincian Obat"]], [40, CONTENT_WIDTH - 40]);
@@ -659,7 +669,7 @@ export default function RekamMedisDetailPage() {
     );
   }
 
-  const meds: any[] = (visit as any).treatments || [];
+  const meds: any[] = (visit as any).medications || [];
 
   return (
     <div className="min-h-screen bg-[#FFF5F7]">
@@ -703,7 +713,6 @@ export default function RekamMedisDetailPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 font-sans">
-          {/* LEFT: PATIENT INFO */}
           <div>
             <Card className="shadow-lg">
               <CardHeader className="bg-pink-600 text-white rounded-t-md">
@@ -781,9 +790,7 @@ export default function RekamMedisDetailPage() {
             </Card>
           </div>
 
-          {/* RIGHT: VISIT + EXAM + MEDS */}
           <div className="lg:col-span-2 space-y-6 font-sans">
-            {/* INFORMASI KUNJUNGAN */}
             <Card className="shadow-lg">
               <CardHeader className="bg-yellow-400/40 rounded-t-md py-5">
                 <div className="flex items-center justify-between w-full">
@@ -796,7 +803,7 @@ export default function RekamMedisDetailPage() {
                       size="sm"
                       className="h-8"
                       onClick={() => {
-                        setDiagnosisDraft((visit as any).treatments?.[0]?.diagnosis || "");
+                        setDiagnosisDraft((visit as any).patient?.medicalHistory || "");
                         setEditDiagnosis(true);
                       }}
                     >
@@ -821,7 +828,7 @@ export default function RekamMedisDetailPage() {
                         className="h-8"
                         variant="outline"
                         onClick={() => {
-                          setDiagnosisDraft((visit as any).treatments?.[0]?.diagnosis || "");
+                          setDiagnosisDraft((visit as any).patient?.medicalHistory || "");
                           setEditDiagnosis(false);
                         }}
                         disabled={saving}
@@ -844,14 +851,14 @@ export default function RekamMedisDetailPage() {
                 <div>
                   <p className="text-xs text-gray-400">DOKTER PEMERIKSA</p>
                   <p className="font-medium mt-1">
-                    {(visit as any).treatments?.[0]?.performer?.fullName || "-"}
+                    {currentDoctorName}
                   </p>
                 </div>
 
                 <div>
                   <p className="text-xs text-gray-400">TINDAKAN</p>
                   <p className="font-medium mt-1">
-                    {(visit as any).treatments?.[0]?.service?.serviceName || "-"}
+                    {getTindakan()}
                   </p>
                 </div>
 
@@ -868,7 +875,7 @@ export default function RekamMedisDetailPage() {
                   ) : (
                     <div className="mt-2 rounded-md bg-pink-50 p-3">
                       <p className="text-pink-700 font-semibold">
-                        {(visit as any).treatments?.[0]?.diagnosis || "-"}
+                        {(visit as any).patient?.medicalHistory || "-"}
                       </p>
                     </div>
                   )}
@@ -876,7 +883,6 @@ export default function RekamMedisDetailPage() {
               </CardContent>
             </Card>
 
-            {/* DETAIL PEMERIKSAAN */}
             <Card className="shadow-lg">
               <CardHeader className="bg-pink-600 text-white rounded-t-md">
                 <div className="flex w-full items-center justify-between">
@@ -1047,7 +1053,6 @@ export default function RekamMedisDetailPage() {
               </CardContent>
             </Card>
 
-            {/* OBAT */}
             <Card className="shadow-lg">
               <CardHeader className="bg-yellow-400/40 rounded-t-md">
                 <div className="flex w-full items-center justify-between">
@@ -1060,14 +1065,12 @@ export default function RekamMedisDetailPage() {
                       size="sm"
                       onClick={() => {
                         const extractedMeds =
-                          (visit as any).treatments?.map((t: any) => ({
-                            id: t.id,
-                            name: t.service?.serviceName || "",
-                            dosage: `${t.quantity ?? 1}`,
-                            duration: "Sesuai kebutuhan",
-                            instructions: t.treatmentNotes || "",
-                            serviceId: t.service?.id || "",
-                          })) || [];
+                          ((visit as any).medications || []).map((m: any) => ({
+                            id: m.id,
+                            name: m.name || "",
+                            quantity: m.quantity || "1",
+                            instructions: m.instructions || "",
+                          }));
                         setMedsDraft(extractedMeds);
                         setDeletedMedIds([]);
                         setEditMeds(true);
@@ -1093,14 +1096,12 @@ export default function RekamMedisDetailPage() {
                         variant="outline"
                         onClick={() => {
                           const extractedMeds =
-                            (visit as any).treatments?.map((t: any) => ({
-                              id: t.id,
-                              name: t.service?.serviceName || "",
-                              dosage: `${t.quantity ?? 1}`,
-                              duration: "Sesuai kebutuhan",
-                              instructions: t.treatmentNotes || "",
-                              serviceId: t.service?.id || "",
-                            })) || [];
+                            ((visit as any).medications || []).map((m: any) => ({
+                              id: m.id,
+                              name: m.name || "",
+                              quantity: m.quantity || "1",
+                              instructions: m.instructions || "",
+                            }));
                           setMedsDraft(extractedMeds);
                           setDeletedMedIds([]);
                           setEditMeds(false);
@@ -1129,16 +1130,16 @@ export default function RekamMedisDetailPage() {
                         <div className="flex justify-between items-start">
                           <div>
                             <p className="font-semibold text-pink-700">
-                              {m.service?.serviceName || m.name}
+                              {m.name}
                             </p>
-                            {(m.treatmentNotes || m.instructions) && (
+                            {m.instructions && (
                               <p className="text-gray-700 text-sm mt-1">
-                                {m.treatmentNotes || m.instructions}
+                                {m.instructions}
                               </p>
                             )}
                           </div>
                           <Badge variant="secondary">
-                            Qty: {m.quantity || m.dosage}
+                            Qty: {m.quantity}
                           </Badge>
                         </div>
                       ) : (
@@ -1153,18 +1154,15 @@ export default function RekamMedisDetailPage() {
                                 copy[idx] = { ...copy[idx], name: e.target.value };
                                 setMedsDraft(copy);
                               }}
-                              disabled={!!m.id}
                             />
 
                             <input
                               className="w-full border rounded p-2"
                               placeholder="Quantity"
-                              type="number"
-                              min="1"
-                              value={m.dosage}
+                              value={m.quantity}
                               onChange={(e) => {
                                 const copy = [...medsDraft];
-                                copy[idx] = { ...copy[idx], dosage: e.target.value };
+                                copy[idx] = { ...copy[idx], quantity: e.target.value };
                                 setMedsDraft(copy);
                               }}
                             />

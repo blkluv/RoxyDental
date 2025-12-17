@@ -10,5 +10,6 @@ router.get('/:id', authMiddleware, patientController.getPatientById.bind(patient
 router.get('/:id/records', authMiddleware, patientController.getPatientRecords.bind(patientController));
 router.post('/', authMiddleware, patientController.createPatient.bind(patientController));
 router.post('/:id/records', authMiddleware, patientController.createTreatment.bind(patientController));
+router.put('/:id/medical-history', authMiddleware, patientController.updateMedicalHistory.bind(patientController));
 
 export default router;
