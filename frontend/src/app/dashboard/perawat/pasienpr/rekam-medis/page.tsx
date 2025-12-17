@@ -238,7 +238,7 @@ export default function MedicalRecordsPage() {
                   "NO. ID",
                   "NAMA PASIEN",
                   "TANGGAL",
-                  "DOKTER",
+                  "PERAWAT",
                   "DIAGNOSIS",
                   "TINDAKAN",
                   "AKSI",
