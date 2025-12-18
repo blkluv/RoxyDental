@@ -291,7 +291,7 @@ export default function MedicalRecordsPage() {
                         className="flex items-center gap-1"
                       >
                         <Eye className="h-4 w-4" />
-                        Edit
+                        Detail
                       </Button>
                     </td>
                   </tr>
