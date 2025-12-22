@@ -19,9 +19,14 @@ interface MenuItem {
 interface Props {
   activeMenu: string;
   setActiveMenu: (menuId: string) => void;
+  onLogout: () => void; // ← ADDED THIS LINE
 }
 
-export default function SettingsSidebar({ activeMenu, setActiveMenu }: Props) {
+export default function SettingsSidebar({ 
+  activeMenu, 
+  setActiveMenu,
+  onLogout // ← ADDED THIS LINE
+}: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
@@ -76,12 +81,9 @@ export default function SettingsSidebar({ activeMenu, setActiveMenu }: Props) {
     router.push(item.path);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+  const handleConfirmLogout = () => {
+    onLogout(); // ← USE THE PROP INSTEAD
     setLogoutDialogOpen(false);
-    router.push('/');
   };
 
   const isMenuActive = (item: MenuItem) => {
@@ -93,21 +95,15 @@ export default function SettingsSidebar({ activeMenu, setActiveMenu }: Props) {
       <Card className="shadow-md bg-pink-50 border border-pink-200">
         <CardContent className="p-5">
           {/* Header */}
-       <div className="mt-6 mb-6">
-          <h2 className="text-base font-semibold text-pink-900 tracking-tight">
-            Menu Pengaturan
-          </h2>
-          <p className="mt-1 text-sm text-pink-500">
-            Pilih kategori pengaturan
-          </p>
-          <div className="mt-2 h-px w-full bg-pink-200" />
-        </div>
-
-
-
-
-
-
+          <div className="mt-6 mb-6">
+            <h2 className="text-base font-semibold text-pink-900 tracking-tight">
+              Menu Pengaturan
+            </h2>
+            <p className="mt-1 text-sm text-pink-500">
+              Pilih kategori pengaturan
+            </p>
+            <div className="mt-2 h-px w-full bg-pink-200" />
+          </div>
 
           {/* Menu Items */}
           <div className="space-y-2">
@@ -177,7 +173,7 @@ export default function SettingsSidebar({ activeMenu, setActiveMenu }: Props) {
               Batal
             </Button>
             <Button
-              onClick={handleLogout}
+              onClick={handleConfirmLogout} // ← CHANGED TO use handleConfirmLogout
               className="px-8 bg-pink-600 hover:bg-pink-700 text-white"
             >
               Ya, Keluar
