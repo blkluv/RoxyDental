@@ -3,14 +3,15 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { User, Lock, Bell, CreditCard, ExternalLink, FileText, Scale, Mail } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { User, Lock, Bell, CreditCard, ExternalLink, FileText, Scale, Mail, LogOut } from "lucide-react";
 import DoctorNavbar from "@/components/ui/navbarpr";
 import SettingsSidebar from "@/components/ui/SettingsSidebarpr";
 
 export default function SettingsAbout() {
   const [activeMenu, setActiveMenu] = useState("tentang");
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const aboutInfo = {
     appName: "Sistem Manajemen Rumah Sakit",
@@ -32,6 +33,27 @@ export default function SettingsAbout() {
     { name: "Kebijakan Privasi", icon: Scale },
     { name: "Lisensi Open Source", icon: FileText },
   ];
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      // Add your actual logout logic here
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setLogoutDialogOpen(false);
+      // Redirect to login page
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout failed:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#FFF5F7]">
@@ -129,8 +151,56 @@ export default function SettingsAbout() {
 
           </div>
         </div>
-
       </div>
+
+      {/* Logout Confirmation Dialog */}
+      <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+        <DialogContent className="sm:max-w-md bg-white">
+          <DialogHeader>
+            <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-pink-100 rounded-full">
+              <LogOut className="w-6 h-6 text-pink-600" />
+            </div>
+            <DialogTitle className="text-center text-xl font-bold text-pink-900">
+              Konfirmasi Keluar
+            </DialogTitle>
+            <DialogDescription className="text-center text-pink-700 mt-2">
+              Apakah Anda yakin ingin keluar dari akun ini?
+              <br />
+              Anda akan dialihkan ke halaman login.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex flex-col sm:flex-row gap-3 mt-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setLogoutDialogOpen(false)}
+              className="flex-1 border-pink-300 text-pink-700 hover:bg-pink-50"
+              disabled={isLoggingOut}
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              onClick={handleLogout}
+              className="flex-1 bg-pink-600 hover:bg-pink-700 text-white"
+              disabled={isLoggingOut}
+            >
+              {isLoggingOut ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Memproses...
+                </>
+              ) : (
+                "Ya, Keluar"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
