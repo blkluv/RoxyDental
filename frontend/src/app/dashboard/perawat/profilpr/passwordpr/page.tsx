@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Shield, Loader2 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Eye, EyeOff, Shield, Loader2, LogOut } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import DoctorNavbar from "@/components/ui/navbarpr";
 import SettingsSidebar from "@/components/ui/SettingsSidebarpr";
 import { authService } from "@/services/auth.service";
@@ -19,6 +19,10 @@ export default function SettingsChangePassword() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Add logout state
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
@@ -122,6 +126,23 @@ export default function SettingsChangePassword() {
     }
   };
 
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      setLogoutDialogOpen(false);
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout failed:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   const handleSuccessClose = () => {
     setSuccessDialogOpen(false);
     // Redirect ke dashboard utama perawat
@@ -133,7 +154,11 @@ export default function SettingsChangePassword() {
       <DoctorNavbar />
       <div className="pt-6 px-4 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <SettingsSidebar activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
+          <SettingsSidebar 
+            activeMenu={activeMenu} 
+            setActiveMenu={setActiveMenu}
+            onLogout={() => setLogoutDialogOpen(true)}
+          />
 
           <div className="lg:col-span-3 mt-6">
             <Card className="shadow-xl rounded-2xl border border-pink-100">
@@ -145,6 +170,7 @@ export default function SettingsChangePassword() {
               </CardHeader>
 
               <CardContent className="p-8 space-y-6">
+                {/* ... rest of your existing content remains the same ... */}
                 <div className="space-y-5">
                   {["old", "new", "confirm"].map((type, idx) => {
                     const isOld = type === "old";
@@ -260,6 +286,55 @@ export default function SettingsChangePassword() {
           © 2025 RosyDental. Platform untuk klinik gigi modern
         </p>
       </div>
+
+      {/* Logout Dialog */}
+      <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+        <DialogContent className="sm:max-w-md bg-white">
+          <DialogHeader>
+            <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-pink-100 rounded-full">
+              <LogOut className="w-6 h-6 text-pink-600" />
+            </div>
+            <DialogTitle className="text-center text-xl font-bold text-pink-900">
+              Konfirmasi Keluar
+            </DialogTitle>
+            <DialogDescription className="text-center text-pink-700 mt-2">
+              Apakah Anda yakin ingin keluar dari akun ini?
+              <br />
+              Anda akan dialihkan ke halaman login.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex flex-col sm:flex-row gap-3 mt-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setLogoutDialogOpen(false)}
+              className="flex-1 border-pink-300 text-pink-700 hover:bg-pink-50"
+              disabled={isLoggingOut}
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              onClick={handleLogout}
+              className="flex-1 bg-pink-600 hover:bg-pink-700 text-white"
+              disabled={isLoggingOut}
+            >
+              {isLoggingOut ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Memproses...
+                </>
+              ) : (
+                "Ya, Keluar"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Konfirmasi Dialog */}
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
